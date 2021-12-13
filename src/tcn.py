@@ -34,8 +34,9 @@ class TCN(layers.Layer):
         
     def call(self, inputs):
         out_layers = []
+        out = inputs
         for temporalBlock in self.modules:
-            out, x = temporalBlock(inputs)
+            out, x = temporalBlock(out)
             out_layers.append(x)
         
         out_layers.append(out)
