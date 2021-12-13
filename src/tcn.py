@@ -24,11 +24,11 @@ class TemporalBlockModule(layers.Layer):
 class TCN(layers.Layer):
     def __init__(self, input_size, hidden_size, output_size, dilation, kernel_size):
         self.modules = [TemporalBlockModule(
-            input_size, hidden_size, output_size, 1, 1)]
+            input_size, hidden_size, hidden_size, 1, 1)]
 
         for i in range(6):
             self.modules.append(TemporalBlockModule(
-                input_size, hidden_size, output_size, 2, 2**i))
+                hidden_size, hidden_size, hidden_size, 2, 2**i))
 
         self.conv = layers.Conv1D(output_size, 1, dilation_rate=1)
         
