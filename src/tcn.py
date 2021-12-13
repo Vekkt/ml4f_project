@@ -18,7 +18,7 @@ class TemporalBlockModule(layers.Layer):
 
 
     def call(self, inputs):
-        return self.block(inputs), inputs
+        return self.block(inputs)
 
 
 class TCN(layers.Layer):
@@ -33,13 +33,12 @@ class TCN(layers.Layer):
         self.conv = layers.Conv1D(output_size, 1, dilation_rate=1)
         
     def call(self, inputs):
-        out_layers = []
         out = inputs
+        out_layers = [out]
         for temporalBlock in self.modules:
-            out, x = temporalBlock(out)
-            out_layers.append(x)
+            out = temporalBlock(out)
+            out_layers.append(out)
         
-        out_layers.append(out)
         return layers.add(out_layers)
             
 
