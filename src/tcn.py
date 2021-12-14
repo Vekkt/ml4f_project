@@ -10,12 +10,12 @@ class TemporalBlockModule(layers.Layer):
         self.block.add(layers.Conv1D(hidden_size, kernel_size,
                                      dilation_rate=dilation,
                                      padding='causal',
-                                     input_shape=(None, input_size)))
-        self.block.add(layers.ReLU())
+                                     input_shape=(input_size, 1)))
+        self.block.add(layers.PReLU())
         self.block.add(layers.Conv1D(output_size, kernel_size,
                                      dilation_rate=dilation,
                                      padding='causal'))
-        self.block.add(layers.ReLU())
+        self.block.add(layers.PReLU())
         
         
         print(self.block.layers[-1].get_shape())
@@ -43,13 +43,3 @@ class TCN(layers.Layer):
             out_layers.append(out)
 
         return layers.add(out_layers)
-
-
-# def tcn(input_size, hidden_size, output_size, dilation, kernel_size):
-#     modules = [TemporalBlockModule(input_size, hidden_size, output_size, 1, 1)]
-
-#     for i in range(6):
-#         modules.append(TemporalBlockModule(
-#             input_size, hidden_size, output_size, 2, 2**i))
-
-#     conv = layers.Conv1D(output_size, 1, dilation_rate=1)
