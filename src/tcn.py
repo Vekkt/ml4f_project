@@ -16,9 +16,6 @@ class TemporalBlockModule(layers.Layer):
                                      dilation_rate=dilation,
                                      padding='causal'))
         self.block.add(layers.PReLU())
-        
-        
-        print(self.block.layers[-1].get_shape())
 
     def call(self, inputs):
         return self.block(inputs)
