@@ -12,11 +12,11 @@ class TemporalBlockModule(layers.Layer):
                                      dilation_rate=dilation,
                                      padding='causal',
                                      input_shape=(None, input_size)))
-        self.block.add(layers.ReLU()) # NEED TO CHANGE THAT TO PRELU
+        self.block.add(layers.ReLU())  # NEED TO CHANGE THAT TO PRELU
         self.block.add(layers.Conv1D(output_size, kernel_size,
                                      dilation_rate=dilation,
                                      padding='causal'))
-        self.block.add(layers.ReLU()) # NEED TO CHANGE THAT TO PRELU
+        self.block.add(layers.ReLU())  # NEED TO CHANGE THAT TO PRELU
 
     def call(self, inputs):
         return self.block(inputs)
@@ -40,5 +40,8 @@ class TCN(layers.Layer):
         for temporalBlock in self.modules:
             out = temporalBlock(out)
             out_layers.append(out)
-
-        return layers.add(out_layers)
+            
+        out = layers.add(out_layers)
+        print(out.shape)
+        out = self.conv(out)
+        return out
