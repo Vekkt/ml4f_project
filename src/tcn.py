@@ -6,6 +6,7 @@ from tensorflow.keras import layers, Sequential
 
 class TemporalBlockModule(layers.Layer):
     def __init__(self, input_size, hidden_size, output_size, dilation, kernel_size):
+        super(TemporalBlockModule, self).__init__()
         self.block = Sequential()
         self.block.add(layers.Conv1D(hidden_size, kernel_size,
                                      dilation_rate=dilation,
@@ -23,6 +24,7 @@ class TemporalBlockModule(layers.Layer):
 
 class TCN(layers.Layer):
     def __init__(self, input_size, hidden_size, output_size, dilation, kernel_size):
+        super(TCN, self).__init__()
         self.modules = [TemporalBlockModule(
             input_size, hidden_size, hidden_size, 1, 1)]
 
