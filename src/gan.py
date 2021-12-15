@@ -68,10 +68,9 @@ class GAN(Model):
 
         # Train the generator
         latent_noise = tf.random.normal(shape=(batch_size, rfs, self.latent_size))
-        fake_data = self.generator(latent_noise)
         
         with tf.GradientTape() as tape:
-            pred_fake = self.discriminator(fake_data)
+            pred_fake = self.discriminator(self.generator(latent_noise))
             pred_misleading = tf.zeros((batch_size, rfs, self.output_size))
             g_loss = self.loss_fn(pred_fake, pred_misleading)
         grads = tape.gradient(g_loss, self.generator.trainable_weights) # outputs only None. Must fix
