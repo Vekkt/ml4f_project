@@ -1,5 +1,5 @@
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Layer, Conv1D, ReLU, add
+from tensorflow.keras.layers import Layer, Conv1D, ReLU, Add
 
 
 class TemporalBlock(Layer):
@@ -30,6 +30,7 @@ class TCN(Layer):
             self.modules.append(TemporalBlock(
                 hidden_size, hidden_size, hidden_size, 2, 2**i, rfs))
 
+        self.skip = Add()
         self.conv = Conv1D(output_size, 1, dilation_rate=1)
 
     def call(self, inputs):
@@ -39,6 +40,6 @@ class TCN(Layer):
             out = temporalBlock(out)
             out_layers.append(out)
 
-        out = add(out_layers)
+        out = self.skip(out_layers)
         out = self.conv(out)
         return out
