@@ -1,2 +1,3 @@
 .DS_Store
 sandbox.ipynb
+src/__pycache__/
