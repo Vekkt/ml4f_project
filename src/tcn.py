@@ -40,8 +40,7 @@ class TCN(layers.Layer):
         for temporalBlock in self.modules:
             out = temporalBlock(out)
             out_layers.append(out)
-            
+
         out = layers.add(out_layers)
-        print(out.shape)
         out = self.conv(out)
         return out
