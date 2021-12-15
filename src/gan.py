@@ -54,6 +54,7 @@ class GAN(Model):
         batch_size = tf.shape(real_data)[0]
         rfs = tf.shape(real_data)[1]
 
+        # Train the discriminator
         for _ in range(self.d_train_steps):
             latent_noise = tf.random.normal(shape=(batch_size, rfs, self.latent_size))
             fake_data = self.generator(latent_noise)
@@ -65,7 +66,10 @@ class GAN(Model):
             grads = tape.gradient(d_loss, self.discriminator.trainable_weights)
             self.d_optimizer.apply_gradients(zip(grads, self.discriminator.trainable_weights))
 
+        # Train the generator
         latent_noise = tf.random.normal(shape=(batch_size, rfs, self.latent_size))
+        fake_data = self.generator(latent_noise)
+        
         with tf.GradientTape() as tape:
             pred_fake = self.discriminator(fake_data)
             pred_misleading = tf.zeros((batch_size, rfs, self.output_size))
@@ -73,6 +77,7 @@ class GAN(Model):
         grads = tape.gradient(g_loss, self.generator.trainable_weights) # outputs only None. Must fix
         self.g_optimizer.apply_gradients(zip(grads, self.generator.trainable_weights))
 
+        # Update the parameters
         self.d_loss_metric.update_state(d_loss)
         self.g_loss_metric.update_state(g_loss)
         return {
