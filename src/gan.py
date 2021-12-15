@@ -51,9 +51,10 @@ class GAN(Model):
     
     def train_step(self, real_data):
         batch_size = tf.shape(real_data)[0]
+        rfs = tf.shape(real_data)[1]
         
         for _ in range(self.d_train_steps):
-            latent_noise = tf.random.normal(shape=(batch_size, self.latent_size))
+            latent_noise = tf.random.normal(shape=(batch_size, rfs, self.latent_size))
             fake_data = self.generator(latent_noise)
             
             with tf.GradientTape() as tape:
@@ -65,7 +66,7 @@ class GAN(Model):
                 zip(grads, self.discriminator.trainable_weights)
             )
         
-        latent_noise = tf.random.normal(shape=(batch_size, self.latent_size))
+        latent_noise = tf.random.normal(shape=(batch_size, rfs, self.latent_size))
         with tf.GradientTape() as tape:
             pred_fake = self.discriminator(fake_data)
             pred_misleading = tf.zeros((self.output_size, batch_size, self.output_size))
