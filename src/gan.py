@@ -36,15 +36,13 @@ class GAN(Model):
         self.discriminator = Discriminator(
             output_size, hidden_size, output_size)
 
-    def compile(self, d_optimizer, g_optimizer):
+    def compile(self, d_optimizer, g_optimizer, loss_fn):
         super(GAN, self).compile()
         self.d_optimizer = d_optimizer
         self.g_optimizer = g_optimizer
+        self.loss_fn = loss_fn
         self.d_loss_metric = Mean(name="d_loss")
         self.g_loss_metric = Mean(name="g_loss")
-
-    def loss_fn(self, y_true, y_pred):
-        return tf.reduce_mean(tf.math.log(y_true)) + tf.reduce_mean(tf.math.log(1. - y_pred))
 
     @property
     def metrics(self):
@@ -71,12 +69,12 @@ class GAN(Model):
         
         with tf.GradientTape() as tape:
             pred_fake = self.discriminator(self.generator(latent_noise))
-            pred_misleading = tf.zeros((batch_size, rfs, self.output_size))
-            g_loss = self.loss_fn(pred_fake, pred_misleading)
+            pred_misleading = tf.ones((batch_size, rfs, self.output_size))
+            g_loss = self.loss_fn(pred_misleading, pred_fake)
         grads = tape.gradient(g_loss, self.generator.trainable_weights)
         self.g_optimizer.apply_gradients(zip(grads, self.generator.trainable_weights))
 
-        # Update the parameters
+        # Update the loss
         self.d_loss_metric.update_state(d_loss)
         self.g_loss_metric.update_state(g_loss)
         return {
