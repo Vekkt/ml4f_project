@@ -1,5 +1,5 @@
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Layer, Conv1D, PReLU, Add
+from tensorflow.keras.layers import Layer, Conv1D, ReLU, Add
 
 
 class TemporalBlock(Layer):
@@ -9,12 +9,12 @@ class TemporalBlock(Layer):
         self.block.add(Conv1D(hidden_size, kernel_size,
                                      dilation_rate=dilation,
                                      padding='causal',
-                                     input_shape=(rfs, input_size)))
-        self.block.add(PReLU())
+                                     input_shape=(None, input_size)))
+        self.block.add(ReLU())
         self.block.add(Conv1D(output_size, kernel_size,
                                      dilation_rate=dilation,
                                      padding='causal'))
-        self.block.add(PReLU())
+        self.block.add(ReLU())
 
     def call(self, inputs):
         return self.block(inputs)
