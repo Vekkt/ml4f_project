@@ -73,7 +73,7 @@ class GAN(Model):
             pred_fake = self.discriminator(self.generator(latent_noise))
             pred_misleading = tf.zeros((batch_size, rfs, self.output_size))
             g_loss = self.loss_fn(pred_fake, pred_misleading)
-        grads = tape.gradient(g_loss, self.generator.trainable_weights) # outputs only None. Must fix
+        grads = tape.gradient(g_loss, self.generator.trainable_weights)
         self.g_optimizer.apply_gradients(zip(grads, self.generator.trainable_weights))
 
         # Update the parameters
