@@ -45,7 +45,7 @@ class GAN(Model):
         self.g_loss_metric = Mean(name="g_loss")
 
     def discriminator_loss(self, pred_real, pred_fake):
-        self.loss_fn(tf.ones_like(pred_real), pred_real) + \
+        return self.loss_fn(tf.ones_like(pred_real), pred_real) + \
             self.loss_fn(tf.zeros_like(pred_fake), pred_fake)
 
     def generator_loss(self, pred_fake):
@@ -69,6 +69,7 @@ class GAN(Model):
                 pred_fake = self.discriminator(fake_data)
                 pred_real = self.discriminator(real_data)
                 d_loss = self.discriminator_loss(pred_real, pred_fake)
+            print(d_loss, self.discriminator.trainable_weights)
             grads = tape.gradient(d_loss, self.discriminator.trainable_weights)
             self.d_optimizer.apply_gradients(
                 zip(grads, self.discriminator.trainable_weights))
