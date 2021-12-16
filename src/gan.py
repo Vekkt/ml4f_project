@@ -44,6 +44,13 @@ class GAN(Model):
         self.d_loss_metric = Mean(name="d_loss")
         self.g_loss_metric = Mean(name="g_loss")
 
+    def discriminator_loss(self, pred_real, pred_fake):
+        self.loss_fn(tf.ones_like(pred_real), pred_real) + \
+            self.loss_fn(tf.zeros_like(pred_fake), pred_fake)
+
+    def generator_loss(self, pred_fake):
+        return self.loss_fn(tf.ones_like(pred_fake), pred_fake)
+
     @property
     def metrics(self):
         return [self.d_loss_metric, self.g_loss_metric]
@@ -54,25 +61,28 @@ class GAN(Model):
 
         # Train the discriminator
         for _ in range(self.d_train_steps):
-            latent_noise = tf.random.normal(shape=(batch_size, rfs, self.latent_size))
+            latent_noise = tf.random.normal(
+                shape=(batch_size, rfs, self.latent_size))
             fake_data = self.generator(latent_noise)
 
             with tf.GradientTape() as tape:
                 pred_fake = self.discriminator(fake_data)
                 pred_real = self.discriminator(real_data)
-                d_loss = self.loss_fn(pred_real, pred_fake)
+                d_loss = self.discriminator_loss(pred_real, pred_fake)
             grads = tape.gradient(d_loss, self.discriminator.trainable_weights)
-            self.d_optimizer.apply_gradients(zip(grads, self.discriminator.trainable_weights))
+            self.d_optimizer.apply_gradients(
+                zip(grads, self.discriminator.trainable_weights))
 
         # Train the generator
-        latent_noise = tf.random.normal(shape=(batch_size, rfs, self.latent_size))
-        
+        latent_noise = tf.random.normal(
+            shape=(batch_size, rfs, self.latent_size))
+
         with tf.GradientTape() as tape:
             pred_fake = self.discriminator(self.generator(latent_noise))
-            pred_misleading = tf.ones((batch_size, rfs, self.output_size))
-            g_loss = self.loss_fn(pred_misleading, pred_fake)
+            g_loss = self.generator_loss(pred_fake)
         grads = tape.gradient(g_loss, self.generator.trainable_weights)
-        self.g_optimizer.apply_gradients(zip(grads, self.generator.trainable_weights))
+        self.g_optimizer.apply_gradients(
+            zip(grads, self.generator.trainable_weights))
 
         # Update the loss
         self.d_loss_metric.update_state(d_loss)
