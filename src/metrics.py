@@ -32,12 +32,3 @@ def acf_score(historical, generated_set, func=None):
 
 def le_score(historical, generated_set):
     return dependence_score(historical, generated_set, 'le')
-
-
-hist = array([1, 2, 3])
-gset = array([array([1, 3, 5]), array([1, 2, 3]), array([1, 2, 3])])
-print(emd(hist, gset[0]))
-print(acf(hist, mode='acf'))
-print(acf(hist, mode='le'))
-print(acf_score(hist, gset))
-print(le_score(hist, gset))
