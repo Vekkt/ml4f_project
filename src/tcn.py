@@ -1,4 +1,4 @@
-    from tensorflow.keras import Sequential
+from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Layer, Conv1D, ReLU, Add
 
 
