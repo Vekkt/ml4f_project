@@ -1,27 +1,31 @@
-from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Layer, Conv1D, ReLU, Add
+from tensorflow.keras import Sequential, Model, Input
+from tensorflow.keras.layers import Layer, Conv1D, ReLU, PReLU, Add, Conv2D
+from tensorflow.keras.activations import relu
 
 
 class TemporalBlock(Layer):
-    def __init__(self, input_size, hidden_size, output_size, dilation, kernel_size, rfs=127):
+    def __init__(self, input_size, hidden_size, output_size, dilation, kernel_size):
         super(TemporalBlock, self).__init__()
-        self.block = Sequential()
-        self.block.add(Conv1D(hidden_size, kernel_size,
-                                     dilation_rate=dilation,
-                                     padding='causal',
-                                     input_shape=(None, input_size)))
-        self.block.add(ReLU())
-        self.block.add(Conv1D(output_size, kernel_size,
-                                     dilation_rate=dilation,
-                                     padding='causal'))
-        self.block.add(ReLU())
+        self.conv1 = Conv1D(hidden_size, kernel_size,
+                            dilation_rate=dilation,
+                            padding='causal',
+                            input_shape=(None, input_size))
+        self.prel1 = PReLU(shared_axes=[1, 2])
+        self.conv2 = Conv1D(output_size, kernel_size,
+                            dilation_rate=dilation,
+                            padding='causal')
+        self.prel2 = PReLU(shared_axes=[1, 2])
 
     def call(self, inputs):
-        return self.block(inputs)
+        x = self.conv1(inputs)
+        x = self.prel1(x)
+        x = self.conv2(x)
+        x = self.prel2(x)
+        return x
 
 
-class TCN(Layer):
-    def __init__(self, input_size, hidden_size, output_size, rfs=127):
+class TCN(Model):
+    def __init__(self, input_size, hidden_size, output_size):
         super(TCN, self).__init__()
         self.modules = [TemporalBlock(
             input_size, hidden_size, hidden_size, 1, 1, rfs)]
@@ -43,3 +47,7 @@ class TCN(Layer):
         out = self.skip(out_layers)
         out = self.conv(out)
         return out
+
+    def model(self, input_shape):
+        x = Input(shape=input_shape)
+        return Model(inputs=[x], outputs=self.call(x))
