@@ -28,11 +28,11 @@ class TCN(Model):
     def __init__(self, input_size, hidden_size, output_size):
         super(TCN, self).__init__()
         self.modules = [TemporalBlock(
-            input_size, hidden_size, hidden_size, 1, 1, rfs)]
+            input_size, hidden_size, hidden_size, 1, 1)]
 
         for i in range(6):
             self.modules.append(TemporalBlock(
-                hidden_size, hidden_size, hidden_size, 2, 2**i, rfs))
+                hidden_size, hidden_size, hidden_size, 2, 2**i))
 
         self.skip = Add()
         self.conv = Conv1D(output_size, 1, dilation_rate=1)
