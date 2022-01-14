@@ -4,7 +4,7 @@ from tensorflow.keras.activations import relu
 
 
 class TemporalBlock(Layer):
-    def __init__(self, input_size, hidden_size, output_size, dilation, kernel_size):
+    def __init__(self, input_size, hidden_size, output_size, dilation, kernel_size, skip=False):
         super(TemporalBlock, self).__init__()
         self.conv1 = Conv1D(hidden_size, kernel_size,
                             dilation_rate=dilation,
@@ -16,23 +16,39 @@ class TemporalBlock(Layer):
                             padding='causal')
         self.prel2 = PReLU(shared_axes=[1, 2])
 
+        if input_size != output_size:
+          self.downsample = Conv1D(output_size, 1, input_shape=(None, input_size))
+        else:
+          self.downsample = None
+
+        self.skip = skip
+
     def call(self, inputs):
         x = self.conv1(inputs)
         x = self.prel1(x)
         x = self.conv2(x)
         x = self.prel2(x)
-        return x
+
+        if self.skip:
+          skip = x if self.downsample is None else self.downsample(x)
+          return x + skip
+        else:
+          return x
 
 
 class TCN(Model):
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self, input_size, hidden_size, output_size, tcn_skip=True, block_skip=False):
         super(TCN, self).__init__()
+
+        self.tcn_skip = tcn_skip
+        self.block_skip = block_skip
+
         self.modules = [TemporalBlock(
-            input_size, hidden_size, hidden_size, 1, 1)]
+            input_size, hidden_size, hidden_size, 1, 1, block_skip)]
 
         for i in range(6):
             self.modules.append(TemporalBlock(
-                hidden_size, hidden_size, hidden_size, 2, 2**i))
+                hidden_size, hidden_size, hidden_size, 2, 2**i, block_skip))
 
         self.skip = Add()
         self.conv = Conv1D(output_size, 1, dilation_rate=1)
@@ -44,7 +60,8 @@ class TCN(Model):
             out = temporalBlock(out)
             out_layers.append(out)
 
-        out = self.skip(out_layers)
+        if self.tcn_skip:
+          out = self.skip(out_layers)
         out = self.conv(out)
         return out
 

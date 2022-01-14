@@ -26,7 +26,7 @@ class Discriminator(Layer):
 
 
 class GAN(Model):
-    def __init__(self, latent_size, hidden_size, output_size, d_train_steps=5, gp_weight=10):
+    def __init__(self, latent_size, hidden_size, output_size, d_train_steps=5, gp_weight=10, tcn_skip=True, block_skip=False):
         super(GAN, self).__init__()
         self.latent_size = latent_size
         self.hidden_size = hidden_size
@@ -37,13 +37,18 @@ class GAN(Model):
         self.discriminator = Discriminator(
             output_size, hidden_size, output_size)
 
-    def compile(self, d_optimizer, g_optimizer, loss_fn):
+    def compile(self, d_optimizer, g_optimizer, loss_fn=None, use_reduce_loss=False):
         super(GAN, self).compile()
         self.d_optimizer = d_optimizer
         self.g_optimizer = g_optimizer
-        # self.loss_fn = loss_fn
-        # self.d_loss_metric = Mean(name="d_loss")
-        # self.g_loss_metric = Mean(name="g_loss")
+        self.use_reduce_loss = use_reduce_loss
+
+        if not self.use_reduce_loss:
+          self.d_loss_metric = Mean(name="d_loss")
+          self.g_loss_metric = Mean(name="g_loss")
+          if loss_fn is None:
+            raise ValueError("Loss function can't be None if use_reduce_loss is False")
+          self.loss_fn = loss_fn
 
     def gradient_penalty(self, batch_size, real_data, fake_data):
         alpha = tf.random.normal([batch_size, 1, 1], 0.0, 1.0)
@@ -62,21 +67,21 @@ class GAN(Model):
 
 
     def discriminator_loss(self, pred_real, pred_fake):
-      return tf.reduce_mean(pred_fake) - tf.reduce_mean(pred_real)
+      if self.use_reduce_loss:
+        return tf.reduce_mean(pred_fake) - tf.reduce_mean(pred_real)
+      else:
+        return self.loss_fn(tf.ones_like(pred_real), pred_real) + \
+        self.loss_fn(tf.zeros_like(pred_fake), pred_fake)
 
-    def generator_loss(self, pred_fake):  
-      return tf.reduce_mean(pred_fake)
+    def generator_loss(self, pred_fake):
+      if self.use_reduce_loss:
+        return tf.reduce_mean(pred_fake)
+      else:
+        return self.loss_fn(tf.ones_like(pred_fake), pred_fake)
       
-    # def discriminator_loss(self, pred_real, pred_fake):
-    #     return self.loss_fn(tf.ones_like(pred_real), pred_real) + \
-    #         self.loss_fn(tf.zeros_like(pred_fake), pred_fake)
-
-    # def generator_loss(self, pred_fake):
-    #     return self.loss_fn(tf.ones_like(pred_fake), pred_fake)
-
-    # @property
-    # def metrics(self):
-    #     return [self.d_loss_metric, self.g_loss_metric]
+    @property
+    def metrics(self):
+        return [self.d_loss_metric, self.g_loss_metric]
 
     def train_step(self, real_data):
         batch_size = tf.shape(real_data)[0]
@@ -110,9 +115,11 @@ class GAN(Model):
         self.g_optimizer.apply_gradients(
             zip(grads, self.generator.trainable_variables))
 
-        # # Update the loss
-        # self.d_loss_metric.update_state(d_loss)
-        # self.g_loss_metric.update_state(g_loss)
+        if not self.use_reduce_loss:
+          # Update the loss
+          self.d_loss_metric.update_state(d_loss)
+          self.g_loss_metric.update_state(g_loss)
+
         return {
             "d_loss": d_loss,
             "g_loss": g_loss
