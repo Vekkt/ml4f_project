@@ -77,7 +77,7 @@ class GAN(Model):
 
     def generator_loss(self, pred_fake):
       if self.use_reduce_loss:
-        return tf.reduce_mean(pred_fake)
+        return -tf.reduce_mean(pred_fake)
       else:
         return self.loss_fn(tf.ones_like(pred_fake), pred_fake)
       
