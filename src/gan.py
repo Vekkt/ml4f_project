@@ -1,3 +1,5 @@
+import numpy as np
+
 import tensorflow as tf
 
 from tensorflow.keras import Model
@@ -8,34 +10,34 @@ from tcn import TCN
 
 
 class Generator(Layer):
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self, input_size, hidden_size, output_size, clip_weights=np.inf, tcn_skip=True, block_skip=False):
         super(Generator, self).__init__()
-        self.tcn = TCN(input_size, hidden_size, output_size)
+        self.tcn = TCN(input_size, hidden_size, output_size, clip_weights=clip_weights, tcn_skip=tcn_skip, block_skip=block_skip)
 
     def call(self, inputs):
         return self.tcn(inputs)
 
 
 class Discriminator(Layer):
-    def __init__(self,  input_size, hidden_size, output_size):
+    def __init__(self,  input_size, hidden_size, output_size, clip_weights=np.inf, tcn_skip=True, block_skip=False):
         super(Discriminator, self).__init__()
-        self.tcn = TCN(input_size, hidden_size, output_size)
+        self.tcn = TCN(input_size, hidden_size, output_size, clip_weights=clip_weights, tcn_skip=tcn_skip, block_skip=block_skip)
 
     def call(self, inputs):
         return sigmoid(self.tcn(inputs))
 
 
 class GAN(Model):
-    def __init__(self, latent_size, hidden_size, output_size, d_train_steps=5, gp_weight=10, tcn_skip=True, block_skip=False):
+    def __init__(self, latent_size, hidden_size, output_size, d_train_steps=5, gp_weight=10, clip_weights=np.inf, tcn_skip=True, block_skip=False):
         super(GAN, self).__init__()
         self.latent_size = latent_size
         self.hidden_size = hidden_size
         self.output_size = output_size
         self.d_train_steps = d_train_steps
         self.gp_weight = gp_weight
-        self.generator = Generator(latent_size, hidden_size, output_size)
+        self.generator = Generator(latent_size, hidden_size, output_size, clip_weights, tcn_skip=tcn_skip, block_skip=block_skip)
         self.discriminator = Discriminator(
-            output_size, hidden_size, output_size)
+            output_size, hidden_size, output_size, clip_weights, tcn_skip=tcn_skip, block_skip=block_skip)
 
     def compile(self, d_optimizer, g_optimizer, loss_fn=None, use_reduce_loss=False):
         super(GAN, self).compile()

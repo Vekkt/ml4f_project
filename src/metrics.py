@@ -3,7 +3,7 @@ from numpy.linalg import norm
 from numpy import array, corrcoef
 
 
-def emd(historical, generated):
+def emd_score(historical, generated):
     return wasserstein_distance(historical, generated)
 
 
@@ -24,7 +24,6 @@ def dependence_score(historical, generated_set, s, mode, func=None):
 
 def acf_score(historical, generated_set, s, func=None):
     return dependence_score(historical, generated_set, s, 'acf', func)
-
 
 def le_score(historical, generated_set, s):
     return dependence_score(historical, generated_set, s, 'le')
