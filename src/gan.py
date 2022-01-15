@@ -42,10 +42,10 @@ class GAN(Model):
         self.d_optimizer = d_optimizer
         self.g_optimizer = g_optimizer
         self.use_reduce_loss = use_reduce_loss
+        self.d_loss_metric = Mean(name="d_loss")
+        self.g_loss_metric = Mean(name="g_loss")
 
         if not self.use_reduce_loss:
-          self.d_loss_metric = Mean(name="d_loss")
-          self.g_loss_metric = Mean(name="g_loss")
           if loss_fn is None:
             raise ValueError("Loss function can't be None if use_reduce_loss is False")
           self.loss_fn = loss_fn
@@ -75,7 +75,7 @@ class GAN(Model):
 
     def generator_loss(self, pred_fake):
       if self.use_reduce_loss:
-        return tf.reduce_mean(pred_fake)
+        return -tf.reduce_mean(pred_fake)
       else:
         return self.loss_fn(tf.ones_like(pred_fake), pred_fake)
       
@@ -115,10 +115,9 @@ class GAN(Model):
         self.g_optimizer.apply_gradients(
             zip(grads, self.generator.trainable_variables))
 
-        if not self.use_reduce_loss:
-          # Update the loss
-          self.d_loss_metric.update_state(d_loss)
-          self.g_loss_metric.update_state(g_loss)
+        # Update the loss
+        self.d_loss_metric.update_state(d_loss)
+        self.g_loss_metric.update_state(g_loss)
 
         return {
             "d_loss": d_loss,
